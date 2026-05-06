@@ -3,7 +3,6 @@ import { createClient } from '@supabase/supabase-js'
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
 
-    console.log("SERVICE KEY:", config.supabaseServiceKey)
   const supabase = createClient(
     config.public.supabaseUrl,
     config.supabaseServiceKey // 🔐 service role key (important)

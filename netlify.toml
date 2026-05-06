@@ -1,0 +1,6 @@
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  SECRETS_SCAN_OMIT_KEYS = "SUPABASE_SERVICE_KEY,NUXT_PUBLIC_SUPABASE_ANON_KEY"

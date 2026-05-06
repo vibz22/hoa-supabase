@@ -1,0 +1,34 @@
+// // app/plugins/supabase.client.ts
+// import { createClient } from '@supabase/supabase-js'
+
+// export default defineNuxtPlugin(() => {
+//   const config = useRuntimeConfig()
+
+//   const supabase = createClient(
+//     config.public.supabaseUrl,
+//     config.public.supabaseAnonKey
+//   )
+
+//   return {
+//     provide: {
+//       supabase
+//     }
+//   }
+// })
+
+import { createClient } from '@supabase/supabase-js'
+
+export default defineNuxtPlugin(() => {
+  const config = useRuntimeConfig()
+
+  const supabase = createClient(
+    config.public.supabaseUrl,
+    config.public.supabaseAnonKey
+  )
+
+  return {
+    provide: {
+      supabase
+    }
+  }
+})

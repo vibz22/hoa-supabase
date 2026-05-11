@@ -56,7 +56,7 @@ if (existingUser) {
   const { data, error: inviteError } =
     // await supabase.auth.admin.inviteUserByEmail(email)
     await supabase.auth.admin.inviteUserByEmail(email, {
-  redirectTo: "http://localhost:3000/set-password"
+  redirectTo: "https://smart-hoa-light.netlify.app/set-password"
 })
 
 if (inviteError) {

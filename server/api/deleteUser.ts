@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 
 export default defineEventHandler(async (event) => {
+
   const config = useRuntimeConfig()
 
   const supabase = createClient(
@@ -15,33 +16,50 @@ export default defineEventHandler(async (event) => {
   const authHeader = getHeader(event, "authorization")
 
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    throw createError({ statusCode: 401, statusMessage: "Unauthorized" })
+    throw createError({
+      statusCode: 401,
+      statusMessage: "Unauthorized"
+    })
   }
 
   const token = authHeader.split("Bearer ")[1]
 
-  // 🔐 Verify user via Supabase
+  // 🔐 Verify user
   const {
     data: { user },
-    error
+    error: authError
   } = await supabase.auth.getUser(token)
 
-  if (error || !user) {
-    throw createError({ statusCode: 401, statusMessage: "Invalid token" })
+  if (authError || !user) {
+    throw createError({
+      statusCode: 401,
+      statusMessage: "Invalid token"
+    })
   }
 
   // 🔍 Get role from DB
-  const { data: userData } = await supabase
+  const { data: userData, error: roleError } = await supabase
     .from("users")
     .select("role")
     .eq("id", user.id)
     .single()
 
-  if (userData?.role !== "admin") {
-    throw createError({ statusCode: 403, statusMessage: "Forbidden" })
+  if (roleError) {
+    throw createError({
+      statusCode: 500,
+      statusMessage: roleError.message
+    })
   }
 
-  // 🚫 Prevent self-delete
+  // 🚫 Only admins allowed
+  if (userData?.role !== "admin") {
+    throw createError({
+      statusCode: 403,
+      statusMessage: "Forbidden"
+    })
+  }
+
+  // 🚫 Prevent self delete
   if (uid === user.id) {
     throw createError({
       statusCode: 400,
@@ -49,18 +67,32 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  // 🔥 DELETE USER (Supabase Admin API)
-  const { error: deleteError } = await supabase.auth.admin.deleteUser(uid)
+  // 🔥 Delete auth user
+  const { error: deleteError } =
+    await supabase.auth.admin.deleteUser(uid)
 
+  // Ignore if already deleted
   if (deleteError) {
+    console.log(
+      "AUTH DELETE ERROR:",
+      deleteError.message
+    )
+  }
+
+  // 🧹 Delete from users table
+  const { error: dbDeleteError } = await supabase
+    .from("users")
+    .delete()
+    .eq("id", uid)
+
+  if (dbDeleteError) {
     throw createError({
       statusCode: 500,
-      statusMessage: deleteError.message
+      statusMessage: dbDeleteError.message
     })
   }
 
-  // 🧹 Optional: delete from users table
-  await supabase.from("users").delete().eq("id", uid)
-
-  return { success: true }
+  return {
+    success: true
+  }
 })

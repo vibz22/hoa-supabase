@@ -357,9 +357,18 @@ const addComment = async (postId) => {
               }}
             </div>
 
-            <small>
+            <!-- <small>
               {{ userMap[post.user_id] || 'unknown' }} • 
               {{ new Date(post.created_at).toLocaleString() }}
+            </small>-->
+           <small>
+              {{ userMap[post.user_id] || 'unknown' }}
+
+              <span v-if="userRoles[post.user_id] === 'admin'" class="admin-tag">
+                ADMIN
+              </span>
+
+              • {{ new Date(post.created_at).toLocaleString() }}
             </small>
 
           </div>
@@ -586,9 +595,24 @@ textarea + button:hover{
 /* ====================== */
 /* ADMIN POSTS */
 /* ====================== */
+.admin-tag{
+  margin-left:8px;
 
+  padding:3px 8px;
+
+  border-radius:999px;
+
+  font-size:10px;
+  font-weight:700;
+
+  letter-spacing:0.5px;
+
+  background:#f59e0b;
+
+  color:white;
+}
 .post.admin{
-  margin-left:auto;
+  /* margin-left:auto; */
 
   background:
   linear-gradient(

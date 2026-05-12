@@ -16,6 +16,9 @@ const selectedUser = ref("")
 const userSearch = ref("")
 const showUserDropdown = ref(false)
 
+const assignSearch = ref({})
+const assignDropdown = ref({})
+
 // 🔥 fetch docs
 const fetchDocuments = async () => {
 
@@ -214,17 +217,59 @@ const removeUser = async (docId, userId) => {
   fetchDocuments()
 }
 
+const assignUser = async (
+  docId,
+  userId
+) => {
+
+  const {
+    data: { session }
+  } = await supabase.auth.getSession()
+
+  const token =
+    session?.access_token
+
+  if (!token) {
+    return
+  }
+
+  await $fetch(
+    "/api/assign-document",
+    {
+      method: "POST",
+
+      headers: {
+        Authorization:
+          `Bearer ${token}`
+      },
+
+      body: {
+        document_id: docId,
+        user_id: userId
+      }
+    }
+  )
+
+  assignSearch.value[docId] = ""
+
+  assignDropdown.value[docId] = false
+
+  fetchDocuments()
+}
+
 // 🚀 init
 onMounted(() => {
 
   fetchDocuments()
 
   document.addEventListener("click", () => {
+
     showUserDropdown.value = false
+
+    assignDropdown.value = {}
   })
 })
 </script>
-
 
 <template>
   <div class="wrapper">
@@ -314,13 +359,56 @@ onMounted(() => {
             </span>
 
             <div v-else class="chips">
-              <div v-for="u in doc.users" :key="u.id" class="chip">
+
+              <div
+                v-for="u in doc.users"
+                :key="u.id"
+                class="chip"
+              >
+
                 {{ u.name || u.email }}
 
-                <span class="remove" @click="removeUser(doc.id, u.id)">
+                <span
+                  class="remove"
+                  @click="removeUser(doc.id, u.id)"
+                >
                   ✕
                 </span>
+
               </div>
+
+              <div class="assign" @click.stop>
+
+                <input
+                  v-model="assignSearch[doc.id]"
+                  placeholder="Add user..."
+                  @focus="
+                    assignDropdown[doc.id] = true
+                  "
+                />
+
+                <div
+                  v-if="assignDropdown[doc.id]"
+                  class="assign-dropdown"
+                >
+
+                  <div
+                    v-for="u in users.filter(user => !doc.users.some(du => du.id === user.id) && (user.name || user.email).toLowerCase().includes((assignSearch[doc.id] || '').toLowerCase()))"
+                    :key="u.id"
+                    class="assign-option"
+                    @click="
+                      assignUser(doc.id, u.id)
+                    "
+                  >
+
+                    {{ u.name || u.email }}
+
+                  </div>
+
+                </div>
+
+              </div>
+
             </div>
           </div>
 
@@ -667,6 +755,64 @@ h1 {
   opacity: 1;
 }
 
+
+
+.assign {
+  position: relative;
+
+  margin-top: 14px;
+}
+
+.assign input {
+  width: 260px;
+
+  height: 42px;
+
+  padding: 0 14px;
+
+  border-radius: 12px;
+
+  border: 1px solid #D7DFEA;
+
+  outline: none;
+}
+
+.assign-dropdown {
+  position: absolute;
+
+  top: calc(100% + 6px);
+
+  left: 0;
+
+  width: 260px;
+
+  max-height: 220px;
+
+  overflow-y: auto;
+
+  background: white;
+
+  border-radius: 14px;
+
+  border: 1px solid #E2E8F0;
+
+  box-shadow:
+    0 10px 24px rgba(15,23,42,0.08);
+
+  z-index: 20;
+}
+
+.assign-option {
+  padding: 12px 14px;
+
+  cursor: pointer;
+
+  transition: background 0.2s ease;
+}
+
+.assign-option:hover {
+  background: #EFF6FF;
+}
 /* ========================= */
 /* MOBILE */
 /* ========================= */

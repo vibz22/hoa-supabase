@@ -16,6 +16,10 @@ const maintenance = ref([])
 const name = ref("")
 const profileLoading = ref(true)
 
+// ✅ ADDED REALTIME CHANNEL
+let announcementChannel = null
+let maintenanceChannel = null
+
 // 📦 DATA
 const fetchData = async () => {
   try {
@@ -50,6 +54,7 @@ const fetchProfile = async () => {
   if (data) {
     name.value = data.name
   }
+
   profileLoading.value = false
 
   if (error) {
@@ -67,7 +72,51 @@ onMounted(async () => {
   }
 
   await fetchData()
-  await fetchProfile() 
+  await fetchProfile()
+
+  // ✅ REALTIME ANNOUNCEMENTS
+  if (!announcementChannel) {
+
+    announcementChannel = supabase
+      .channel("homeowner-announcements")
+
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "announcements"
+        },
+
+        async () => {
+          await fetchData()
+        }
+      )
+
+      .subscribe()
+  }
+
+  // ✅ REALTIME MAINTENANCE
+if (!maintenanceChannel) {
+
+  maintenanceChannel = supabase
+    .channel("homeowner-maintenance")
+
+    .on(
+      "postgres_changes",
+      {
+        event: "*",
+        schema: "public",
+        table: "maintenance_requests"
+      },
+
+      async () => {
+        await fetchData()
+      }
+    )
+
+    .subscribe()
+}
 })
 
 // 🚪 LOGOUT
@@ -85,7 +134,10 @@ const logout = async () => {
       <h1 v-if="!profileLoading">
         Welcome {{ name || user?.email }}
       </h1>
-      <h1 v-else>Loading...</h1>
+
+      <h1 v-else>
+        Loading...
+      </h1>
 
       <p>
         {{ role === "admin" ? "Admin Panel Access" : "Homeowner Portal" }}
@@ -94,33 +146,62 @@ const logout = async () => {
 
     <!-- 🔥 Quick Actions -->
     <div class="grid">
-      <NuxtLink 
-  :to="role === 'admin' ? '/admin/documents' : '/documents'" 
-  class="card action"
->
-  📄 Documents
-</NuxtLink>
 
-      <NuxtLink to="/community" class="card action">💬 Community</NuxtLink>
-      <NuxtLink to="/profile" class="card action">👤 Profile</NuxtLink>
+      <NuxtLink
+        :to="role === 'admin' ? '/admin/documents' : '/documents'"
+        class="card action"
+      >
+        📄 Documents
+      </NuxtLink>
 
-      <NuxtLink v-if="role === 'admin'" to="/admin" class="card action admin">
+      <NuxtLink to="/community" class="card action">
+        💬 Community
+      </NuxtLink>
+
+      <NuxtLink to="/profile" class="card action">
+        👤 Profile
+      </NuxtLink>
+
+      <NuxtLink
+        v-if="role === 'admin'"
+        to="/admin"
+        class="card action admin"
+      >
         🛡 Admin Panel
       </NuxtLink>
 
-      <NuxtLink v-if="role === 'admin'" to="/admin/announcement" class="card action admin">
+      <NuxtLink
+        v-if="role === 'admin'"
+        to="/admin/announcement"
+        class="card action admin"
+      >
         📢 Add Announcement
       </NuxtLink>
 
-      <NuxtLink v-if="role === 'admin'" to="/admin/maintenance" class="card action admin">
+      <NuxtLink
+        v-if="role === 'admin'"
+        to="/admin/maintenance"
+        class="card action admin"
+      >
         🛠 Add Maintenance
       </NuxtLink>
-       <NuxtLink v-if="role === 'admin'" to="/admin/document-logs" class="card action admin">
-    👁 Document Logs
-  </NuxtLink>
-  <NuxtLink v-if="role === 'admin'" to="/admin/document-list" class="card action admin">
-    📂 Document list
-  </NuxtLink>
+
+      <NuxtLink
+        v-if="role === 'admin'"
+        to="/admin/document-logs"
+        class="card action admin"
+      >
+        👁 Document Logs
+      </NuxtLink>
+
+      <NuxtLink
+        v-if="role === 'admin'"
+        to="/admin/document-list"
+        class="card action admin"
+      >
+        📂 Document list
+      </NuxtLink>
+
     </div>
 
     <!-- 🔥 Content Sections -->
@@ -128,24 +209,36 @@ const logout = async () => {
 
       <!-- Announcements -->
       <div class="section card-glass">
+
         <h2>Latest Announcements</h2>
 
-        <div v-if="loading">Loading...</div>
+        <div v-if="loading">
+          Loading...
+        </div>
 
         <div v-else-if="announcements.length === 0">
           No announcements yet
         </div>
 
         <div v-else>
-          <div class="item" v-for="a in announcements" :key="a.id">
+
+          <div
+            class="item"
+            v-for="a in announcements"
+            :key="a.id"
+          >
             <h3>{{ a.title }}</h3>
+
             <p>{{ a.content }}</p>
           </div>
+
         </div>
+
       </div>
 
       <!-- Maintenance -->
       <div class="section card-glass">
+
         <h2>Maintenance / Repairs</h2>
 
         <div v-if="maintenance.length === 0">
@@ -153,11 +246,19 @@ const logout = async () => {
         </div>
 
         <div v-else>
-          <div class="item" v-for="m in maintenance" :key="m.id">
+
+          <div
+            class="item"
+            v-for="m in maintenance"
+            :key="m.id"
+          >
             <strong>{{ m.title }}</strong>
+
             <p>{{ m.content }}</p>
           </div>
+
         </div>
+
       </div>
 
     </div>

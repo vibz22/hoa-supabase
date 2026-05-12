@@ -226,6 +226,9 @@ const userRoles = ref({})
 const comments = ref({})
 const newComments = ref({})
 
+let postsChannel = null
+let commentsChannel = null
+
 // 🔐 LOAD USER + POSTS + USERS
 onMounted(async () => {
   const { data } = await supabase.auth.getUser()
@@ -262,6 +265,56 @@ onMounted(async () => {
 
   // 🆕 FETCH COMMENTS
   await fetchComments()
+
+  // 🔥 REALTIME POSTS
+if (!postsChannel) {
+
+  postsChannel = supabase
+    .channel("community-posts")
+
+    .on(
+      "postgres_changes",
+      {
+        event: "*",
+        schema: "public",
+        table: "posts"
+      },
+
+      async () => {
+
+        const { data } = await supabase
+          .from("posts")
+          .select("*")
+          .order("created_at", { ascending: false })
+
+        posts.value = data || []
+      }
+    )
+
+    .subscribe()
+}
+
+// 🔥 REALTIME COMMENTS
+if (!commentsChannel) {
+
+  commentsChannel = supabase
+    .channel("community-comments")
+
+    .on(
+      "postgres_changes",
+      {
+        event: "*",
+        schema: "public",
+        table: "comments"
+      },
+
+      async () => {
+        await fetchComments()
+      }
+    )
+
+    .subscribe()
+}
 
   loading.value = false
 })

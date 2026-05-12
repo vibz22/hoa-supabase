@@ -268,7 +268,10 @@ onMounted(async () => {
 
 // ➕ ADD POST (UNCHANGED)
 const addPost = async () => {
-  if (!newPost.value.trim()) return
+  if (!newPost.value.trim()) {
+  alert("Please write a message")
+  return
+  }
 
   await supabase.from("posts").insert({
     user_id: user.value.id,
@@ -304,8 +307,10 @@ const fetchComments = async () => {
 // 🆕 ADD COMMENT
 const addComment = async (postId) => {
   const text = newComments.value[postId]
-  if (!text?.trim()) return
-
+  if (!text?.trim()) {
+   alert("Please write a comment")
+  return
+  }
   await supabase.from("comments").insert({
     post_id: postId,
     user_id: user.value.id,

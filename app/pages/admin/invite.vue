@@ -21,7 +21,21 @@ watchEffect(() => {
 
 // 🚀 invite
 const inviteUser = async () => {
-  if (!email.value || !name.value) return
+  if (!name.value) {
+
+  message.value =
+    "❌ Please enter full name"
+
+  return
+}
+
+if (!email.value) {
+
+  message.value =
+    "❌ Please enter email"
+
+  return
+}
 
   loading.value = true
   message.value = ""

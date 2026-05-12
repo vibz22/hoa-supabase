@@ -37,9 +37,37 @@ const fetchUsers = async () => {
 
   users.value = data || []
 }
+const handleFileChange = (event) => {
+
+  const selected =
+    event.target.files?.[0]
+
+  file.value =
+    selected || null
+}
 
 const upload = async () => {
-  if (!title.value || !file.value) return
+  if (!title.value) {
+
+  message.value = "❌ Please enter title"
+
+  return
+}
+
+if (!file.value) {
+
+  message.value = "❌ Please select file"
+
+  return
+}
+
+if (selectedUsers.value.length === 0) {
+
+  message.value =
+    "❌ Please select at least one user"
+
+  return
+}
 
   loading.value = true
   message.value = ""
@@ -92,8 +120,8 @@ onMounted(fetchUsers)
       <p class="subtitle">Assign access to users</p>
 
       <input v-model="title" placeholder="Document Title" />
-      <input type="file" @change="e => file = e.target.files[0]" />
-
+      <!-- <input type="file" @change="e => file.value = e.target.files[0]" /> -->
+      <input type="file" @change="handleFileChange" />
       <h3>Select Users</h3>
 
       <input v-model="userSearch" placeholder="Search users..." />

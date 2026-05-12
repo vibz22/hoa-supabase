@@ -6,6 +6,7 @@ import { useSupabase } from "~/composables/useSupabase"
 const { supabase } = useSupabase()
 const { role } = useAuth()
 
+const errorMessage = ref("")
 const title = ref("")
 const message = ref("")
 const loading = ref(false)
@@ -35,7 +36,23 @@ const fetchMaintenance = async () => {
 
 // 🔥 Add
 const addMaintenance = async () => {
-  if (!title.value || !message.value) return
+ errorMessage.value = ""
+
+if (!title.value) {
+
+  errorMessage.value =
+    "❌ Please enter title"
+
+  return
+}
+
+if (!message.value) {
+
+  errorMessage.value =
+    "❌ Please enter message"
+
+  return
+}
 
   loading.value = true
 
@@ -96,6 +113,13 @@ onMounted(() => {
       <button @click="addMaintenance" :disabled="loading">
         {{ loading ? "Adding..." : "Add" }}
       </button>
+
+      <p
+  v-if="errorMessage"
+  class="error"
+>
+  {{ errorMessage }}
+</p>
     </div>
 
     <div class="card">
@@ -372,6 +396,22 @@ button:disabled {
   font-size: 14px;
 
   line-height: 1.7;
+}
+
+.error {
+
+  margin-top: 16px;
+
+  padding: 14px 16px;
+
+  border-radius: 16px;
+
+  background: #FEE2E2;
+
+  color: #B91C1C;
+
+  font-size: 14px;
+  font-weight: 600;
 }
 
 /* ========================= */
